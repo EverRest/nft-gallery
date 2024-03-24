@@ -1,0 +1,91 @@
+// Define your datasource for PostgreSQL
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Define the Collection model
+model Collection {
+  id      Int      @id @default(autoincrement())
+  slug    String   @unique
+  name    String
+  url     String
+  details Json
+  // Define the relationship with Asset and NftSale models
+  assets  Asset[]
+  sales   NftSale[]
+}
+
+// Define the Account model
+model Account {
+  id         Int       @id @default(autoincrement())
+  userName   String?
+  address    String    @unique
+  details    Json
+  // Define the relationships with Asset and NftSale models
+  assets     Asset[]
+  sales      NftSale[] @relation("sellerAccount")
+  purchases  NftSale[] @relation("fromAccount")
+  transfers  NftSale[] @relation("toAccount")
+  winnings   NftSale[] @relation("winnerAccount")
+}
+
+// Define the Asset model
+model Asset {
+  id            Int       @id
+  name          String
+  collectionId  Int
+  collection    Collection @relation(fields: [collectionId], references: [id])
+  description   String
+  contractDate  DateTime
+  url           String    @unique
+  imgUrl        String
+  ownerId       Int
+  owner         Account   @relation(fields: [ownerId], references: [id])
+  details       Json
+  // Define the relationship with NftSale model
+  sales         NftSale[]
+  categoryId    Int
+  category      Category  @relation(fields: [categoryId], references: [id])
+}
+
+// Define the NftSale model
+model NftSale {
+  id               Int       @id
+  time             DateTime
+  assetId          Int
+  asset            Asset     @relation(fields: [assetId], references: [id])
+  collectionId     Int
+  collection       Collection @relation(fields: [collectionId], references: [id])
+  auctionType      Auction
+  contractAddress  String
+  quantity         Float
+  paymentSymbol    String
+  totalPrice       Float
+  sellerAccountId  Int
+  sellerAccount    Account   @relation("sellerAccount", fields: [sellerAccountId], references: [id])
+  fromAccountId    Int
+  fromAccount      Account   @relation("fromAccount", fields: [fromAccountId], references: [id])
+  toAccountId      Int
+  toAccount        Account   @relation("toAccount", fields: [toAccountId], references: [id])
+  winnerAccountId  Int
+  winnerAccount    Account   @relation("winnerAccount", fields: [winnerAccountId], references: [id])
+}
+
+// Define the Category model
+model Category {
+  id     Int      @id @default(autoincrement())
+  name   String
+  // Define the relationship with Asset model
+  assets Asset[]
+}
+
+// Define the Auction enum
+enum Auction {
+  dutch
+  english
+  min_price
+  drop
+  lottery
+  free_spin
+}
