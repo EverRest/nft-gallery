@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14.2
+    restart: always
+    environment:
+      POSTGRES_USER: prisma
+      POSTGRES_PASSWORD: prisma
+      POSTGRES_DB: prisma
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+
+  nxginx:
+    restart: always
+    build:
+      dockerfile: Dockerfile
+      context: "./nginx"
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+      - client
+
+  api:
+    restart: always
+    build:
+      dockerfile: Dockerfile
+      context: './api'
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    ports:
+      - '3001:3000'
+    depends_on:
+      - postgres
+
+  client:
+    restart: always
+    build:
+      dockerfile: Dockerfile
+      context: "./client"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  pg_data:
